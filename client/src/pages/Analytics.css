@@ -1,0 +1,13 @@
+.analytics-container {
+    padding: 20px;
+    background: #f5f7fa;
+    border-radius: 10px;
+    margin: 20px;
+  }
+  
+  .analytics-container h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
