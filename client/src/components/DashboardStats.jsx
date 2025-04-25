@@ -1,21 +1,25 @@
-// ✅ src/components/DashboardStats.js
+// src/components/DashboardStats.js
 import React from "react";
 import "./DashboardStats.css";
 
-const DashboardStats = () => {
-  const stats = [
-    { label: "Total Students", value: 0 },
-    { label: "Total Internships", value: 0 },
-    { label: "Total Feedbacks", value: 0 },
-    { label: "Pending Internships", value: 0 },
+const DashboardStats = ({ stats }) => {
+  const statItems = [
+    { label: "Total Students", value: stats.totalStudents },
+    { label: "Total Internships", value: stats.totalInternships },
+    { label: "Total Feedbacks", value: stats.totalFeedbacks },
+    { label: "Pending Internships", value: stats.pendingInternships },
   ];
 
   return (
-    <div className="stats-grid">
-      {stats.map((item, index) => (
-        <div key={index} className="stat-card">
-          <h3>{item.label}</h3>
-          <p>{item.value}</p>
+    <div className="row">
+      {statItems.map((item, index) => (
+        <div key={index} className="col-md-3 mb-4">
+          <div className="card text-center shadow-sm">
+            <div className="card-body">
+              <h5 className="card-title">{item.label}</h5>
+              <p className="card-text fs-4">{item.value}</p>
+            </div>
+          </div>
         </div>
       ))}
     </div>

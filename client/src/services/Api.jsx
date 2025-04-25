@@ -1,31 +1,20 @@
-// src/services/api.js
+// src/services/Api.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/admin';
+// ✅ Changed: removed hardcoded localhost and used relative path
+const BASE_URL = '/api/admin';
 
 export const getDashboardStats = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/dashboard-stats`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-  }
+  const res = await axios.get(`${BASE_URL}/dashboard-stats`);
+  return res.data;
 };
 
 export const getAllInternships = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/internships`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching internships:', error);
-  }
+  const res = await axios.get(`${BASE_URL}/internships`);
+  return res.data;
 };
 
 export const updateInternshipStatus = async (id, status) => {
-  try {
-    const response = await axios.put(`${API_URL}/internships/${id}/status`, { status });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating internship status:', error);
-  }
+  const res = await axios.patch(`${BASE_URL}/internships/${id}/status`, { status });
+  return res.data;
 };

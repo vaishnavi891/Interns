@@ -7,6 +7,8 @@ import Students from './pages/Students';
 import Internships from './pages/Internships';
 import Feedbacks from './pages/Feedbacks';
 import Analytics from './pages/Analytics';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 const App = () => {
   return (

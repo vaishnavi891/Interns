@@ -4,14 +4,16 @@ const Student = require('../models/Student');
 const Internship = require('../models/Internship');
 const Feedback = require('../models/Feedback');
 
-// Filtered internships by status + branch
+// Filtered internships by status + branch + semester + year
+// Endpoint: /api/admin/internships/filter
+// Filtered internships by status + branch + semester + year
 router.get('/internships/filter', async (req, res) => {
-  const { type, branch } = req.query; // type = ongoing | past | future
+  const { type, branch, year, semester } = req.query;
 
   try {
     const today = new Date();
-
     let dateQuery = {};
+
     if (type === 'ongoing') {
       dateQuery = { startingDate: { $lte: today }, endingDate: { $gte: today } };
     } else if (type === 'past') {
@@ -21,16 +23,37 @@ router.get('/internships/filter', async (req, res) => {
     }
 
     const internships = await Internship.find(dateQuery);
-    
-    if (!branch) return res.json(internships);
 
-    // Get roll numbers of students in that branch
-    const students = await Student.find({ branch });
-    const branchRollNumbers = students.map(std => std.rollNumber);
+    const studentQuery = {};
+    if (branch) studentQuery.branch = branch;
+    if (year) studentQuery.year = year;
+    if (semester) studentQuery.semester = semester;
 
-    const filteredInternships = internships.filter(intern =>
-      branchRollNumbers.includes(intern.rollNumber)
-    );
+    const students = await Student.find(studentQuery);
+    const studentMap = {};
+    students.forEach(s => {
+      studentMap[s.rollNumber] = s;
+    });
+
+    const filteredInternships = internships
+      .filter(i => studentMap[i.rollNumber])
+      .map(i => {
+        const start = new Date(i.startingDate);
+        const end = new Date(i.endingDate);
+        let status = "";
+
+        if (today < start) status = "future";
+        else if (today > end) status = "past";
+        else status = "ongoing";
+
+        return {
+          ...i.toObject(),
+          status,
+          branch: studentMap[i.rollNumber]?.branch || null,
+          semester: studentMap[i.rollNumber]?.semester || null,
+          package: i.package || null
+        };
+      });
 
     res.json(filteredInternships);
   } catch (err) {
@@ -39,7 +62,46 @@ router.get('/internships/filter', async (req, res) => {
 });
 
 
+
+// Update Internship Status
+// Endpoint: /api/admin/internships/:id/status
+router.patch('/internships/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const updated = await Internship.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Filtered Students
+// Endpoint: /api/admin/students
+router.get('/students', async (req, res) => {
+  try {
+    const { year, semester, branch } = req.query;
+
+    let query = {};
+
+    if (year) query.academicYear = year;
+    if (semester) query.semester = semester;
+    if (branch) query.branch = branch;
+
+    const students = await Student.find(query);
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Dashboard Stats
+// Endpoint: /api/admin/dashboard-stats
 router.get('/dashboard-stats', async (req, res) => {
   try {
     const totalStudents = await Student.countDocuments();
@@ -58,17 +120,8 @@ router.get('/dashboard-stats', async (req, res) => {
   }
 });
 
-// All Students
-router.get('/students', async (req, res) => {
-  try {
-    const students = await Student.find();
-    res.json(students);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // All Internships
+// Endpoint: /api/admin/internships
 router.get('/internships', async (req, res) => {
   try {
     const internships = await Internship.find();
@@ -79,6 +132,7 @@ router.get('/internships', async (req, res) => {
 });
 
 // All Feedbacks
+// Endpoint: /api/admin/feedbacks
 router.get('/feedbacks', async (req, res) => {
   try {
     const feedbacks = await Feedback.find();
@@ -88,14 +142,102 @@ router.get('/feedbacks', async (req, res) => {
   }
 });
 
-// Approve/Reject Internship
-router.put('/internships/:id/status', async (req, res) => {
+router.get('/analytics', async (req, res) => {
   try {
-    const { status } = req.body;
-    await Internship.findByIdAndUpdate(req.params.id, { status });
-    res.json({ message: `Internship marked as ${status}` });
+    const { status } = req.query;
+
+    const internships = await Internship.find();
+    const students = await Student.find();
+
+    const studentMap = {};
+    students.forEach(s => {
+      studentMap[s.rollNumber] = s;
+    });
+
+    const today = new Date();
+
+    const filtered = internships.filter((i) => {
+      const student = studentMap[i.rollNumber];
+      if (!student) return false;
+
+      const start = new Date(i.startingDate);
+      const end = new Date(i.endingDate);
+
+      let calculatedStatus = "";
+      if (today < start) calculatedStatus = "future";
+      else if (today > end) calculatedStatus = "past";
+      else calculatedStatus = "ongoing";
+
+      if (status && status !== "all" && status !== calculatedStatus) return false;
+
+      i.branch = student.branch;
+      i.semester = student.semester;
+      return true;
+    });
+
+    // Group by branch & semester
+    const branchCounts = {};
+    const semesterCounts = {};
+
+    filtered.forEach((item) => {
+      const branch = item.branch || "Unknown";
+      const semester = item.semester || "Unknown";
+
+      branchCounts[branch] = (branchCounts[branch] || 0) + 1;
+      semesterCounts[semester] = (semesterCounts[semester] || 0) + 1;
+    });
+
+    res.json({
+      branchData: Object.entries(branchCounts).map(([branch, count]) => ({ branch, count })),
+      semesterData: Object.entries(semesterCounts).map(([semester, count]) => ({ semester, count })),
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Analytics Fetch Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+router.get("/roll/:rollNumber", async (req, res) => {
+  try {
+    const rollNumber = req.params.rollNumber;
+
+    // Fetch student
+    const student = await Student.findOne({ rollNumber });
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Fetch internships linked to student
+    const internships = await Internship.find({ rollNumber });
+
+    const today = new Date();
+
+    const detailedInternships = internships.map((internship) => {
+      const start = new Date(internship.startingDate);
+      const end = new Date(internship.endingDate);
+
+      let status = "";
+      if (today < start) status = "future";
+      else if (today > end) status = "past";
+      else status = "ongoing";
+
+      return {
+        internshipID: internship.internshipID,
+        organizationName: internship.organizationName,
+        role: internship.role,
+        startingDate: internship.startingDate,
+        endingDate: internship.endingDate,
+        status,
+      };
+    });
+
+    res.json({
+      student,
+      internships: detailedInternships
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
