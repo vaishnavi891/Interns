@@ -3,10 +3,10 @@ const router = express.Router();
 const Student = require('../models/Student');
 const Internship = require('../models/Internship');
 const Feedback = require('../models/Feedback');
+const User = require('../models/User');
 
 // Filtered internships by status + branch + semester + year
 // Endpoint: /api/admin/internships/filter
-// Filtered internships by status + branch + semester + year
 router.get('/internships/filter', async (req, res) => {
   const { type, branch, year, semester } = req.query;
 
@@ -60,8 +60,6 @@ router.get('/internships/filter', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // Update Internship Status
 // Endpoint: /api/admin/internships/:id/status
@@ -142,102 +140,31 @@ router.get('/feedbacks', async (req, res) => {
   }
 });
 
-router.get('/analytics', async (req, res) => {
+// New route to get all users (admin only)
+router.get('/users', async (req, res) => {
   try {
-    const { status } = req.query;
-
-    const internships = await Internship.find();
-    const students = await Student.find();
-
-    const studentMap = {};
-    students.forEach(s => {
-      studentMap[s.rollNumber] = s;
-    });
-
-    const today = new Date();
-
-    const filtered = internships.filter((i) => {
-      const student = studentMap[i.rollNumber];
-      if (!student) return false;
-
-      const start = new Date(i.startingDate);
-      const end = new Date(i.endingDate);
-
-      let calculatedStatus = "";
-      if (today < start) calculatedStatus = "future";
-      else if (today > end) calculatedStatus = "past";
-      else calculatedStatus = "ongoing";
-
-      if (status && status !== "all" && status !== calculatedStatus) return false;
-
-      i.branch = student.branch;
-      i.semester = student.semester;
-      return true;
-    });
-
-    // Group by branch & semester
-    const branchCounts = {};
-    const semesterCounts = {};
-
-    filtered.forEach((item) => {
-      const branch = item.branch || "Unknown";
-      const semester = item.semester || "Unknown";
-
-      branchCounts[branch] = (branchCounts[branch] || 0) + 1;
-      semesterCounts[semester] = (semesterCounts[semester] || 0) + 1;
-    });
-
-    res.json({
-      branchData: Object.entries(branchCounts).map(([branch, count]) => ({ branch, count })),
-      semesterData: Object.entries(semesterCounts).map(([semester, count]) => ({ semester, count })),
-    });
+    const users = await User.find({}, 'rollNo name email role'); // select fields to return
+    res.json(users);
   } catch (err) {
-    console.error("Analytics Fetch Error:", err);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Get users error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.get("/roll/:rollNumber", async (req, res) => {
+// New route to create a student
+router.post('/students', async (req, res) => {
+  const { rollNo, name, email } = req.body;
   try {
-    const rollNumber = req.params.rollNumber;
-
-    // Fetch student
-    const student = await Student.findOne({ rollNumber });
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+    const existingStudent = await Student.findOne({ rollNumber: rollNo });
+    if (existingStudent) {
+      return res.status(400).json({ error: 'Student already exists' });
     }
-
-    // Fetch internships linked to student
-    const internships = await Internship.find({ rollNumber });
-
-    const today = new Date();
-
-    const detailedInternships = internships.map((internship) => {
-      const start = new Date(internship.startingDate);
-      const end = new Date(internship.endingDate);
-
-      let status = "";
-      if (today < start) status = "future";
-      else if (today > end) status = "past";
-      else status = "ongoing";
-
-      return {
-        internshipID: internship.internshipID,
-        organizationName: internship.organizationName,
-        role: internship.role,
-        startingDate: internship.startingDate,
-        endingDate: internship.endingDate,
-        status,
-      };
-    });
-
-    res.json({
-      student,
-      internships: detailedInternships
-    });
+    const student = new Student({ rollNumber: rollNo, name, email });
+    await student.save();
+    res.status(201).json({ message: 'Student created successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server Error" });
+    console.error('Create student error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
