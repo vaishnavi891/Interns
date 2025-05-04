@@ -40,7 +40,7 @@ function InternshipForm() {
     if (nocFile) form.append("noc", nocFile);
 
     try {
-      const res = await fetch("/api/internships/submit", {
+      const res = await fetch("http://localhost:6001/api/internships/submit", {
         method: "POST",
         body: form
       });

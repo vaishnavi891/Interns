@@ -14,10 +14,19 @@ export default function Login() {
 
   const handleLogin = async e => {
     e.preventDefault();
+
+    if (!credentials.email || !credentials.password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
+    console.log('Logging in with credentials:', credentials);
+
     setLoading(true);
     setError('');
     try {
       const res = await loginUser(credentials);
+      console.log('Login response:', res);
       const { token, role, email } = res;
 
       alert('Login successful');
@@ -34,6 +43,7 @@ export default function Login() {
         navigate('/');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -52,6 +62,7 @@ export default function Login() {
           name="email"
           type="email"
           placeholder="Email"
+          value={credentials.email}
           onChange={handleChange}
           className="input-style"
           disabled={loading}
@@ -60,6 +71,7 @@ export default function Login() {
           name="password"
           type="password"
           placeholder="Password"
+          value={credentials.password}
           onChange={handleChange}
           className="input-style"
           disabled={loading}

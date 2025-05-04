@@ -20,7 +20,7 @@ const Internships = () => {
         })
         .join("&");
 
-      const res = await axios.get(`http://localhost:5000/api/admin/internships/filter?${query}`);
+      const res = await axios.get(`http://localhost:6001/api/admin/internships/filter?${query}`);
       setInternships(res.data);
     } catch (error) {
       console.error("Error fetching internships:", error);
@@ -85,6 +85,7 @@ const Internships = () => {
           <thead className="table-light">
             <tr>
               <th>Roll No</th>
+              <th>Name</th>
               <th>Organization</th>
               <th>Role</th>
               <th>Start Date</th>
@@ -98,15 +99,16 @@ const Internships = () => {
           <tbody>
             {internships.map((internship) => (
               <tr key={internship._id}>
-                <td>{internship.rollNumber}</td>
+                <td>{internship.rollNo}</td>
+                <td>{internship.name}</td>
                 <td>{internship.organization}</td>
                 <td>{internship.role}</td>
-                <td>{new Date(internship.startingDate).toLocaleDateString()}</td>
-                <td>{new Date(internship.endingDate).toLocaleDateString()}</td>
+                <td>{new Date(internship.startDate).toLocaleDateString()}</td>
+                <td>{new Date(internship.endDate).toLocaleDateString()}</td>
                 <td>{internship.status}</td>
                 <td>{internship.branch || "-"}</td>
                 <td>{internship.semester || "-"}</td>
-                <td>{internship.package || "-"}</td>
+                <td>{internship.pay || "-"}</td>
               </tr>
             ))}
             {internships.length === 0 && (

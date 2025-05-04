@@ -1,0 +1,73 @@
+### Register User
+POST http://localhost:6001/auth/register
+Content-Type: application/json
+
+{
+  "rollNo": "23071A05X1",
+  "name": "Test User",
+  "email": "testuser@example.com",
+  "branch": "CSE",
+  "semester": "5",
+  "password": "password123"
+}
+
+### Login User
+POST http://localhost:6001/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "password123"
+}
+
+### Create Student
+POST http://localhost:6001/api/admin/students
+Content-Type: application/json
+
+{
+  "rollNumber": "23071A05X1",
+  "name": "Test User",
+  "email": "testuser@example.com",
+  "branch": "CSE",
+  "semester": "5"
+}
+### Get All Internships (GET /all)
+GET http://localhost:6001/api/internships/all
+Accept: application/json
+
+###
+ GET http://localhost:6001/api/admin/students
+
+###
+GET http://localhost:6001/api/admin/internships
+
+###
+GET http://localhost:6001/api/admin/feedbacks
+
+###
+GET http://localhost:6001/api/admin/dashboard-stats
+
+###
+GET  http://localhost:6001/api/admin/roll/23071A05F8
+###
+GET http://localhost:6001/api/admin/users
+
+POST http://localhost:6001/api/auth/register
+Content-Type: application/json
+
+{
+  "rollNo": "23071A05X1",
+  "name": "Test User",
+  "email": "testuser@example.com",
+  "branch": "CSE",
+  "semester": "5",
+  "password": "password123"
+}
+
+### Login User
+POST http://localhost:6001/api/auth/login
+Content-Type: application/json
+###
+http://localhost:6001/auth/register
+###
+GET http://localhost:6001/api/internship/submit

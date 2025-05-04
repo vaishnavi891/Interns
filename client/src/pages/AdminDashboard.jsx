@@ -1,6 +1,6 @@
 // src/pages/AdminDashboard.js
 import React, { useEffect, useState } from 'react';
-import { getDashboardStats } from '../services/api';
+import { getDashboardStats, getAllInternships } from '../services/api';
 import DashboardStats from '../components/DashboardStats';
 import UserList from '../components/UserList';
 import './Pages.css';
@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   });
 
   const [users, setUsers] = useState([]);
+  const [internships, setInternships] = useState([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -35,8 +36,24 @@ const AdminDashboard = () => {
       }
     };
 
+    const fetchInternships = async () => {
+      try {
+        const data = await getAllInternships();
+        setInternships(data);
+      } catch (error) {
+        console.error("Failed to fetch internships:", error);
+      }
+    };
+
     fetchStats();
     fetchUsers();
+    fetchInternships();
+
+    const intervalId = setInterval(() => {
+      fetchInternships();
+    }, 10000); // refresh every 10 seconds
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -44,6 +61,14 @@ const AdminDashboard = () => {
       <h1 className="mb-4">Admin Dashboard</h1>
       <DashboardStats stats={stats} />
       <UserList users={users} />
+      <h2 className="mt-5">Internship Submissions</h2>
+      <ul>
+        {internships.map((internship) => (
+          <li key={internship._id}>
+            {internship.studentName || internship.rollNumber} - Status: {internship.status || 'N/A'}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

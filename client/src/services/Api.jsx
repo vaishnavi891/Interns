@@ -1,4 +1,3 @@
-// src/services/Api.js
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:6001';
@@ -19,7 +18,15 @@ export const updateInternshipStatus = async (id, status) => {
 };
 
 export const registerUser = async (form) => {
-  const res = await axios.post(`${BASE_URL}/auth/register`, form);
+  const { rollNo, name, email, branch, semester, password } = form;
+  const res = await axios.post(`${BASE_URL}/auth/register`, {
+    rollNo,
+    name,
+    email,
+    branch,
+    semester,
+    password
+  });
   return res.data;
 };
 

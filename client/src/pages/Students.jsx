@@ -14,7 +14,7 @@ const Students = () => {
   const fetchStudents = async () => {
     try {
       const query = new URLSearchParams(filters).toString();
-      const res = await axios.get(`http://localhost:5000/api/admin/students?${query}`);
+      const res = await axios.get(`http://localhost:6001/api/admin/students?${query}`);
       setStudents(res.data);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -31,7 +31,7 @@ const Students = () => {
 
   const openModal = async (rollNumber) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/admin/roll/${rollNumber}`);
+      const res = await axios.get(`http://localhost:6001/api/admin/roll/${rollNumber}`);
       setSelectedStudent(res.data);
       setShowModal(true);
     } catch (err) {
